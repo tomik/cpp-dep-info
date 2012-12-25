@@ -53,7 +53,19 @@ if __name__ == "__main__":
                       dest="includes",
                       default=".",
                       help="Space separated list of include paths.")
+    parser.add_option("-d",
+                      "--num_deps",
+                      dest="num_deps",
+                      default="10",
+                      help="Number of include dependencies to print. Zero means all.")
+    parser.add_option("-p",
+                      "--num_impacts",
+                      dest="num_impacts",
+                      default="10",
+                      help="Number of include impacts to print. Zero means all.")
     (options, args) = parser.parse_args()
+    num_deps = int(options.num_deps)
+    num_impacts = int(options.num_impacts)
     include_paths=filter(lambda s: len(s), options.includes.split(" "))
     if len(args) > 1:
         parser.error("Expects at most one argument with file paths.")
@@ -116,10 +128,19 @@ if __name__ == "__main__":
         for dep in closure:
             include_impacts[dep].add(key)
 
+    result_deps = list(reversed(sorted(include_deps.items(),
+                                  cmp=lambda fst, snd: cmp(len(fst[1]), len(snd[1])))))
+    if num_deps:
+        result_deps = result_deps[:num_deps]
     print("Build dependencies:")
-    for key, deps in reversed(sorted(include_deps.items(), cmp=lambda fst, snd: cmp(len(fst[1]), len(snd[1])))):
+    for key, deps in result_deps:
         print("%s %d" % (key, len(deps)))
 
+    result_impacts = list(reversed(sorted(include_impacts.items(),
+                              cmp=lambda fst, snd: cmp(len(fst[1]), len(snd[1])))))
+    if num_impacts:
+        result_impacts = result_impacts[:num_impacts]
+    print("")
     print("Impact dependencies:")
-    for key, deps in reversed(sorted(include_impacts.items(), cmp=lambda fst, snd: cmp(len(fst[1]), len(snd[1])))):
+    for key, deps in result_impacts:
         print("%s %d" % (key, len(deps)))
